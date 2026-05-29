@@ -1,1 +1,1 @@
-# AgreeSmarter_Extension
+# Agree Smarter Extension
