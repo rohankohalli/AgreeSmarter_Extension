@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgreeSmarter</title>
+    <link rel="stylesheet" href="popup.css" />
+</head>
+
+<body>
+
+    <div class="header">
+        <span class="logo">Agree Smarter</span>
+        <span class="tagline">Know before you agree</span>
+    </div>
+
+    <!-- No Analysis Yet Screen -->
+    <div class="screen hidden" id="screen-idle">
+        <p class="idle-msg">
+            Visit any page with a signup form or consent checkbox —
+            AgreeSmarter will automatically analyze it.
+        </p>
+    </div>
+
+    <!-- Results Screen -->
+    <div class="screen hidden" id="screen-results">
+
+        <div class="meta">
+            <span id="result-domain" class="domain"></span>
+            <span id="result-score" class="score-badge"></span>
+        </div>
+
+        <p id="result-summary" class="summary"></p>
+
+        <div id="result-red" class="section hidden">
+            <div class="section-label red">🔴 CONCERNS</div>
+            <ul id="list-red" class="issue-list"></ul>
+        </div>
+
+        <div id="result-yellow" class="section hidden">
+            <div class="section-label yellow">🟡 REVIEW</div>
+            <ul id="list-yellow" class="issue-list"></ul>
+        </div>
+
+        <div id="result-green" class="section hidden">
+            <div class="section-label green">🟢 GOOD</div>
+            <ul id="list-green" class="issue-list"></ul>
+        </div>
+    </div>
+
+</body>
+<script src="popup.js"></script>
+
+</html>
