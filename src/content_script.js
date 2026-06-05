@@ -12,10 +12,14 @@ function init() {
     scanForCheckboxes()
     scanForPassiveConsent()
 
-    // Watch for dynamically loaded forms (SPAs, modals)
+    // Watch for dynamically loaded forms (SPAs, modals) with 300ms debounce
+    let debounceTimer;
     const observer = new MutationObserver(() => {
-        scanForCheckboxes()
-        scanForPassiveConsent()
+        clearTimeout(debounceTimer)
+        debounceTimer = setTimeout(() => {
+            scanForCheckboxes()
+            scanForPassiveConsent()
+        }, 300)
     })
 
     observer.observe(document.body, {
@@ -134,6 +138,12 @@ function injectBadge(element, consentText, isCheckbox = true) {
             ? `Policy found at: ${policyLink} \n\n${consentText}`
             : consentText
 
+    // Verify extension context is valid before sending message
+    if (typeof chrome !== 'undefined' && !chrome.runtime?.id) {
+        console.warn("[AgreeSmarter] Extension reloaded or context invalidated. Please refresh the page to continue scanning.");
+        return;
+    }
+
     browser_api.runtime.sendMessage(
         {
             type: "ANALYZE_PRIVACY_POLICY",
@@ -141,26 +151,59 @@ function injectBadge(element, consentText, isCheckbox = true) {
             domain: domain
         },
         (response) => {
+            // Verify extension context is still valid inside the callback
+            if (typeof chrome !== 'undefined' && !chrome.runtime?.id) {
+                return;
+            }
             if (!response || !response.success) {
                 const errMsg = response?.error || "unknown"
+
+                // Detailed console error logging
+                console.error(`[AgreeSmarter] Privacy analysis failed for ${domain}:`, errMsg)
+
                 badge.innerHTML = ""
 
-                if (errMsg === "NO_API_KEY") {
+                if (errMsg === "NO_API_KEY" || errMsg.includes("CONFIG is not defined")) {
                     const nkeySpan = document.createElement("span")
                     nkeySpan.className = "as-nokey"
-                    nkeySpan.textContent = "🔑 Add Groq API key in AgreeSmarter "
+                    nkeySpan.textContent = "🔑 Setup Groq API key in AgreeSmarter "
                     const btn = document.createElement("button")
                     btn.className = "as-open-popup"
-                    btn.textContent = "Set Key →"
+                    btn.textContent = "Open Extension →"
                     btn.addEventListener("click", () => {
+                        if (typeof chrome !== 'undefined' && !chrome.runtime?.id) {
+                            alert("AgreeSmarter extension was reloaded. Please refresh the page.");
+                            return;
+                        }
                         browser_api.runtime.sendMessage({ type: "OPEN_POPUP" })
                     })
                     nkeySpan.appendChild(btn)
                     badge.appendChild(nkeySpan)
+                } else if (errMsg.startsWith("RATE_LIMIT_85_TOKENS:") || errMsg.startsWith("RATE_LIMIT_85_REQUESTS:")) {
+                    const msgContent = errMsg.split(":")[1]
+                    const errSpan = document.createElement("span")
+                    errSpan.className = "as-error"
+                    errSpan.textContent = `⚠️ AgreeSmarter: ${msgContent}`
+                    errSpan.title = "To avoid hitting Groq API rate limits, AgreeSmarter automatically pauses requests when 85% of minute limits are consumed."
+                    badge.appendChild(errSpan)
+                } else if (errMsg.startsWith("RATE_LIMIT_DAILY:")) {
+                    const msgContent = errMsg.split(":")[1]
+                    const errSpan = document.createElement("span")
+                    errSpan.className = "as-error"
+                    errSpan.textContent = `⚠️ AgreeSmarter: ${msgContent}`
+                    errSpan.title = "The Groq daily requests or tokens limit has been reached. Scanning will automatically resume tomorrow."
+                    badge.appendChild(errSpan)
                 } else {
                     const errSpan = document.createElement("span")
                     errSpan.className = "as-error"
-                    errSpan.textContent = "⚠️ AgreeSmarter: analysis failed"
+                    
+                    if (errMsg.includes("Failed to fetch") || errMsg.includes("blocked")) {
+                        errSpan.textContent = "⚠️ AgreeSmarter: Request blocked or offline"
+                        errSpan.title = `Error: ${errMsg}. Check if an ad-blocker or firewall is blocking api.groq.com.`
+                    } else {
+                        errSpan.textContent = `⚠️ AgreeSmarter: analysis failed (${errMsg.slice(0, 40)}${errMsg.length > 40 ? '...' : ''})`
+                        errSpan.title = `Error: ${errMsg}`
+                    }
                     badge.appendChild(errSpan)
                 }
                 return
