@@ -11,8 +11,11 @@
 <body>
 
     <div class="header">
-        <span class="logo">Agree Smarter</span>
-        <span class="tagline">Know before you agree</span>
+        <div>
+            <span class="logo">Agree Smarter</span>
+            <span class="tagline">Know before you agree</span>
+        </div>
+        <button id="btn-settings" class="settings-gear-btn" title="Settings">⚙️ Settings</button>
     </div>
 
     <!-- No Analysis Yet Screen -->
@@ -47,6 +50,28 @@
             <div class="section-label green">🟢 GOOD</div>
             <ul id="list-green" class="issue-list"></ul>
         </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div class="screen hidden" id="screen-settings">
+        <div id="rotation-warning" class="warning-banner hidden">
+            ⚠️ <strong>Key Rotation Suggestion</strong><br>
+            It has been more than 90 days since you last updated your API key. For security, please rotate your key.
+        </div>
+
+        <p class="settings-desc">
+            To use AgreeSmarter, enter your Groq API Key below. Your key is stored securely in your browser.
+        </p>
+
+        <div class="form-group">
+            <input type="password" id="api-key-input" placeholder="Enter Groq API Key (gsk_...)" />
+            <button id="save-key-btn">Save API Key</button>
+            <a href="https://console.groq.com/keys" target="_blank" class="get-key-link">Get a free Groq API key →</a>
+        </div>
+
+        <div id="save-status" class="save-status hidden">Saved successfully!</div>
+
+        <button id="btn-back-settings" class="back-btn">← Back</button>
     </div>
 
 </body>
